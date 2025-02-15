@@ -1,62 +1,81 @@
 # Smart City Indoor Localization & Navigation
 
-This repository serves as a core integration for a primitive indoor localization system, developed as part of a Smart City graduation project. The system enables an agent (simulating a vehicle) to navigate on a map toward a designated target point smoothly after determining its current position. A realistic environment parallel to real-world conditions has been built to train the navigation model efficiently.
-
-The system is designed to integrate with an indoor localization solution that uses ESP32 microcontrollers and a Flask server to estimate position using WiFi signal strength. You can find the indoor localization source code [here](https://github.com/algamelomer/indoor-localization.git).
+This repository serves as the core framework for an intelligent indoor navigation system, developed as part of a Smart City project. It enables an agent (representing an autonomous vehicle) to smoothly navigate to any designated target point after determining its current position. A realistic environment has been created to parallel real-world conditions and serve as a training ground for reinforcement learning models.
 
 ## Overview
 
-The repository contains two primary implementations:
+The system is designed to integrate with an indoor localization solution that utilizes ESP32 microcontrollers and a Flask server to estimate position based on WiFi signal strength. You can find the localization module source code [here](https://github.com/algamelomer/indoor-localization.git).
+
+### Key Components
 
 1. **Basic Environment (`smart_city_env.py`)**  
-   A primitive simulation of a city grid where roads are defined by a binary map. The agent moves along the grid, collecting points located at predefined "tower" positions. This serves as a proof-of-concept for integration with the localization system.
+   - Simulates a city grid where roads are represented by a binary map.
+   - The agent moves along predefined paths, collecting signal points located at virtual "tower" positions.
+   - Serves as a proof-of-concept for integrating with real-world localization data.
 
 2. **Advanced Environment with DQN (`smart_city_DQN.py`)**  
-   An enhanced version of the simulation environment coupled with a Deep Q-Network (DQN) reinforcement learning agent. This version utilizes noisy linear layers to improve exploration during training. The RL agent learns to navigate the grid toward a dynamically set target point while receiving rewards based on its proximity and correct movements.
+   - Integrates reinforcement learning (Deep Q-Network) to enhance navigation capabilities.
+   - Uses noisy layers for improved exploration and learning stability.
+   - The agent learns to autonomously navigate toward dynamically assigned target points, receiving rewards for optimal movement decisions.
 
 ## Features
 
-- **Grid-Based Environment:**  
-  The city is represented as a 21x21 grid with designated horizontal and vertical road segments.
+### Environment Structure
 
-- **Tower Points:**  
-  Specific grid locations represent signal towers (labeled A–E) that are used for localization.
+The smart city environment is structured as a **21x21 grid**, where road segments define valid movement paths.
 
-- **Agent Navigation:**  
-  The agent can move in four directions (up, down, left, right) with allowed actions depending on its current road segment.
+| Symbol | Description |
+|--------|-------------|
+| `0`    | Obstacle (Building, Restricted Area) |
+| `1`    | Road (Valid Movement Area) |
+| `A-E`  | Signal Towers (Localization Points) |
+| `S`    | Start Position of Agent |
+| `T`    | Target Position |
 
-- **Reinforcement Learning:**  
-  The advanced version integrates a DQN-based agent with:
-  - Noisy layers to enhance exploration.
-  - A target network for stability.
-  - Experience replay with a large memory buffer.
+### Agent Navigation
 
-- **Integration Ready:**  
-  Designed as a nucleus for integrating with a real indoor localization system.
+The agent can perform the following movements:
 
-## Development Roadmap
+| Action | Description |
+|--------|-------------|
+| `↑` (Up)    | Moves one step upward if a road exists |
+| `↓` (Down)  | Moves one step downward if a road exists |
+| `←` (Left)  | Moves one step left if a road exists |
+| `→` (Right) | Moves one step right if a road exists |
 
-This project is intended to evolve into a fully functional autonomous navigation system. Future improvements include:
+The navigation logic follows:
+- The agent starts at a random position on the road.
+- It moves toward the target while following predefined movement constraints.
+- In the reinforcement learning version, the agent receives **reward signals** for choosing optimal paths.
 
-- **Integration with Indoor Localization:**  
-  The environment will be directly linked with the indoor localization system, allowing the agent to receive real-time position updates.
+### Reinforcement Learning Implementation
 
-- **Traffic Rules and Priorities:**  
-  The environment will be expanded to incorporate traffic rules, right-of-way logic, and priority-based navigation to simulate real-world conditions.
+- **Deep Q-Network (DQN) with Experience Replay**: Improves training efficiency and prevents catastrophic forgetting.
+- **Noisy Layers**: Introduced to encourage better exploration of possible paths.
+- **Target Network**: Used to stabilize training by reducing oscillations in Q-value updates.
 
-- **Autonomous City Navigation:**  
-  The agent will be trained to reach any desired point within the city without requiring pre-defined waypoints. The model will dynamically determine the best path using real-time localization and reinforcement learning.
+## Future Development & Integration
 
-## Requirements
+This project is intended to evolve into a fully autonomous smart city navigation system. Planned enhancements include:
+
+- **Full Integration with Indoor Localization**  
+  The system will incorporate real-time WiFi-based localization data to allow dynamic position tracking.
+
+- **Traffic Rules & Priority Handling**  
+  Future versions will simulate real-world traffic rules, intersections, and priority-based decision-making.
+
+- **Autonomous City Navigation**  
+  The final objective is to enable the agent to navigate **freely within the smart city** without requiring predefined waypoints.
+
+## Installation Requirements
 
 - Python 3.6+
 - [Gym](https://www.gymlibrary.ml/)
 - [NumPy](https://numpy.org/)
 - [Pygame](https://www.pygame.org/news)
-- [PyTorch](https://pytorch.org/) (for the DQN implementation)
+- [PyTorch](https://pytorch.org/) (for the reinforcement learning model)
 
-Install the required packages using pip:
-
+Install dependencies with:
 ```bash
 pip install gym numpy pygame torch
 ```
@@ -64,35 +83,25 @@ pip install gym numpy pygame torch
 ## Usage
 
 ### Running the Basic Environment
-
-To run the basic simulation environment:
-
 ```bash
 python smart_city_env.py
 ```
+This will:
+- Initialize the environment.
+- Place the agent at a random starting point.
+- Allow movement until all signal towers are visited.
+- Render the simulation using Pygame.
 
-This script will:
-- Initialize the grid-based environment.
-- Randomly position the agent on a road.
-- Allow the agent to move randomly until all tower points are visited.
-- Render the environment using Pygame.
-
-### Running the Advanced DQN Environment
-
-To train and test the DQN-based agent:
-
+### Running the DQN Navigation Model
 ```bash
 python smart_city_DQN.py
 ```
+This will:
+- Train the agent using deep reinforcement learning.
+- Save the trained model.
+- Test navigation efficiency under different conditions.
 
-This script will:
-- Initialize the enhanced simulation environment.
-- Set up a DQN agent with noisy layers.
-- Train the agent over multiple episodes while rendering the simulation.
-- Save the trained model for later use.
-- Run test episodes to demonstrate the agent’s performance.
-
-## Visualization
+## Environment Visualization
 
 Below is an example of the environment rendered using Gym:
 
