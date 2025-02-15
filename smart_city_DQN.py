@@ -9,7 +9,6 @@ import pygame
 from pygame.locals import *
 from gym import spaces
 
-# تعريف البيئة مع التحسينات
 class SmartCityEnv(gym.Env):
     metadata = {'render.modes': ['human', 'rgb_array']}
     
@@ -18,7 +17,6 @@ class SmartCityEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(low=0, high=20, shape=(4,), dtype=np.int32)
         
-        # بناء الشبكة الطرقية
         self.track = np.zeros((21, 21), dtype=int)
         self._build_roads()
         
@@ -63,26 +61,23 @@ class SmartCityEnv(gym.Env):
     def step(self, action):
         r, c = self.agent_pos
         allowed = self.get_allowed_actions(self.agent_pos)
-        reward = -0.05  # عقوبة الوقت الأساسية
+        reward = -0.05 
         
         if action not in allowed:
-            reward -= 0.5  # عقوبة الحركة غير القانونية
+            reward -= 0.5 
             return self._get_obs(), reward, False, {}
         
-        # حساب الحركة
         dr = [-1, 1, 0, 0][action]
         dc = [0, 0, -1, 1][action]
         new_pos = (r + dr, c + dc)
         
         if self._is_valid(new_pos):
             self.agent_pos = new_pos
-            reward += 0.1  # مكافأة الحركة الصحيحة
+            reward += 0.1 
             
-        # حساب المكافآت
         if self.agent_pos == self.target:
             return self._get_obs(), 20.0, True, {}
         
-        # مكافأة حسب القرب من الهدف
         dist = np.linalg.norm(np.array(self.agent_pos) - np.array(self.target))
         reward += (1.0 / (dist + 1)) * 0.5
         
@@ -115,7 +110,6 @@ class SmartCityEnv(gym.Env):
                     rect = (c*32, r*32, 32, 32)
                     pygame.draw.rect(self.screen, colors['road'], rect)
                     
-                    # رسم خطوط التوجيه
                     if r in {1,10,19} and c not in {0,1,2,9,10,11,18,19,20}:
                         pygame.draw.line(self.screen, colors['divider'],
                                        (c*32, r*32+16), (c*32+32, r*32+16), 2)
@@ -123,12 +117,10 @@ class SmartCityEnv(gym.Env):
                         pygame.draw.line(self.screen, colors['divider'],
                                        (c*32+16, r*32), (c*32+16, r*32+32), 2)
                 
-                # رسم النقاط
                 if (r,c) in self.tower_points:
                     color = colors['target'] if (r,c) == self.target else colors['points']
                     pygame.draw.circle(self.screen, color, (c*32+16, r*32+16), 10)
         
-        # رسم الوكيل
         pygame.draw.rect(self.screen, colors['agent'],
                        (self.agent_pos[1]*32, self.agent_pos[0]*32, 32, 32))
         
@@ -139,7 +131,6 @@ class SmartCityEnv(gym.Env):
     def close(self):
         pygame.quit()
 
-# خوارزمية DQN المحسنة
 class NoisyLinear(nn.Module):
     def __init__(self, in_features, out_features, std_init=0.4):
         super(NoisyLinear, self).__init__()
@@ -188,7 +179,7 @@ class AdvancedDQN(nn.Module):
     def __init__(self, input_size, output_size):
         super().__init__()
         self.net = nn.Sequential(
-            NoisyLinear(input_size, 128),  # استخدام الطبقة الضوضائية
+            NoisyLinear(input_size, 128), 
             nn.ReLU(),
             NoisyLinear(128, 256),
             nn.ReLU(),
@@ -212,9 +203,9 @@ class RLAgent:
         self.epsilon = epsilon_start
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
-        self.epsilon_decay = 0.98  # معدل اضمحلال أبطأ
-        self.batch_size = 128  # زيادة حجم الدفعة
-        self.memory = deque(maxlen=200000)  # زيادة حجم الذاكرة
+        self.epsilon_decay = 0.98 
+        self.batch_size = 128 
+        self.memory = deque(maxlen=200000)  
         
         self.model = AdvancedDQN(self.state_size, self.action_size)
         self.target_model = AdvancedDQN(self.state_size, self.action_size)
@@ -261,16 +252,15 @@ class RLAgent:
         loss = nn.MSELoss()(current_q.squeeze(), target)
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)  # تقييد التدرجات
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0) 
         self.optimizer.step()
         
-        # إعادة توليد الضوضاء بعد التحديث
         self.model.reset_noise()
         self.target_model.reset_noise()
     
     def train(self, episodes=800, update_target_every=50):
         rewards_history = []
-        epsilon_step = (self.epsilon_start - self.epsilon_end) / episodes  # اضمحلال خطي
+        epsilon_step = (self.epsilon_start - self.epsilon_end) / episodes  
         
         for e in range(episodes):
             state = self.env.reset()
@@ -285,7 +275,6 @@ class RLAgent:
                 state = next_state
                 total_reward += reward
                 
-            # تحديث إبسيلون (خطي)
             self.epsilon = max(self.epsilon_end, self.epsilon - epsilon_step)
             
             if e % update_target_every == 0:
@@ -302,10 +291,9 @@ class RLAgent:
 env = SmartCityEnv()
 agent = RLAgent(env)
 
-# بدء التدريب
 rewards = agent.train(episodes=10000)
 agent.save_model()
-# اختبار النموذج
+
 test_episodes = 10
 for _ in range(test_episodes):
     state = env.reset()
