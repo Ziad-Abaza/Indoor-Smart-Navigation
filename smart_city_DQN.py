@@ -1,3 +1,12 @@
+"""
+Enhanced DQN Agent for Smart City Navigation
+- Dueling DQN Architecture
+- Noisy Networks for Exploration
+- Dynamic Reward Shaping
+- Improved State Representation
+- Lightweight Network Design
+"""
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -34,6 +43,51 @@ class SmartCityEnv(gym.Env):
         self.clock = None
         self.reset()
 
+    def render(self, mode='human'):
+            if self.screen is None:
+                pygame.init()
+                self.screen = pygame.display.set_mode((672, 672))
+                self.clock = pygame.time.Clock()
+            
+            colors = {
+                'road': (80, 80, 80),
+                'divider': (200, 200, 0),
+                'agent': (255, 0, 0),
+                'target': (0, 200, 0),
+                'points': (160, 32, 240)
+            }
+            
+            self.screen.fill((0, 0, 0))
+            for r in range(21):
+                for c in range(21):
+                    if self.track[r, c] == 1:
+                        rect = (c*32, r*32, 32, 32)
+                        pygame.draw.rect(self.screen, colors['road'], rect)
+                        
+                        # رسم خطوط التوجيه
+                        if r in {1,10,19} and c not in {0,1,2,9,10,11,18,19,20}:
+                            pygame.draw.line(self.screen, colors['divider'],
+                                          (c*32, r*32+16), (c*32+32, r*32+16), 2)
+                        if c in {1,10,19} and r not in {0,1,2,9,10,11,18,19,20}:
+                            pygame.draw.line(self.screen, colors['divider'],
+                                          (c*32+16, r*32), (c*32+16, r*32+32), 2)
+                    
+                    # رسم النقاط
+                    if (r,c) in self.tower_points:
+                        color = colors['target'] if (r,c) == self.target else colors['points']
+                        pygame.draw.circle(self.screen, color, (c*32+16, r*32+16), 10)
+            
+            # رسم الوكيل
+            pygame.draw.rect(self.screen, colors['agent'],
+                          (self.agent_pos[1]*32, self.agent_pos[0]*32, 32, 32))
+            
+            pygame.display.flip()
+            self.clock.tick(10)
+            return None if mode == 'human' else pygame.surfarray.array3d(self.screen)
+
+    def close(self):
+        pygame.quit()
+        
     def _build_roads(self):
         """Initialize road network"""
         self.track[0:3, :] = 1    # North horizontal
