@@ -98,11 +98,3 @@ Below is an example of the environment rendered using Gym:
 
 ![Environment Visualization](./screenshots/screenshot.png)
 
-## Contributing
-
-Contributions and feedback are welcome! If you have suggestions or improvements, please feel free to open an issue or submit a pull request.
-
-## License
-
-This project is provided for educational purposes. (Include your license information here if applicable.)
-
